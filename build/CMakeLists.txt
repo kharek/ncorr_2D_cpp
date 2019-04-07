@@ -11,7 +11,7 @@ SET(ncorr_h ../include/ncorr.h ../include/Strain2D.h ../include/Disp2D.h ../incl
 
 # Set include directory
 INCLUDE_DIRECTORIES(../include)
-
+INCLUDE_DIRECTORIES(/usr/include/suitesparse/)
 # Set output for library
 SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ../lib)
 
@@ -19,7 +19,7 @@ SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ../lib)
 ADD_LIBRARY(ncorr STATIC ${ncorr_src})
 
 # Set C++11 support
-set_property(TARGET ncorr PROPERTY CXX_STANDARD 11)
+set_property(TARGET ncorr PROPERTY CXX_STANDARD 17)
 set_property(TARGET ncorr PROPERTY CXX_STANDARD_REQUIRED ON)
 
 # Set -03 optimization

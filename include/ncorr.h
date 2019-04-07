@@ -1,6 +1,7 @@
 /* 
  * File:   ncorr.h
  * Author: justin
+ * Author: Héctor
  *
  * Created on May 12, 2015, 1:33 AM
  */
@@ -14,10 +15,87 @@
 #include "Data2D.h"
 #include "Disp2D.h"
 #include "Strain2D.h"
+#include <mutex>
 
 namespace ncorr {
 
 namespace details {
+
+
+//#define NCORR_STATS_DEBUG
+
+#ifdef NCORR_STATS_DEBUG
+class ncorr_stats
+{
+private:
+
+public:
+  ncorr_stats():
+    mPosX(0),   mPosY(0),         mDisplX(0),
+    mDisplY(0), mDeforX(0),       mDefSlicingXY(0),
+    mDeforY(0), mDefSlicingYX(0), mCorrCoef(0){};
+
+  ncorr_stats(double	posX, 	double	posY,	        double	displX,
+      double	displY,	double	deforX,	      double	defSlicingXY,
+      double	deforY, double	defSlicingYX,	double	corrCoef):
+        mPosX(posX),      mPosY(posY),                  mDisplX(displX),
+        mDisplY(displY),  mDeforX(deforX),              mDefSlicingXY(defSlicingXY),
+        mDeforY(deforY),  mDefSlicingYX(defSlicingYX),  mCorrCoef(corrCoef){};
+
+  ncorr_stats(const ncorr_stats& ) 	= delete;
+  ncorr_stats(ncorr_stats&&) 			  = default;
+  virtual ~ncorr_stats() 				    = default;
+
+  double  mPosX;
+  double  mPosY;
+  double  mDisplX;
+  double  mDisplY;
+  double  mDeforX;
+  double  mDefSlicingXY;
+  double  mDeforY;
+  double  mDefSlicingYX;
+  double  mCorrCoef;
+};
+
+class ncorr_stats_debugger
+{
+private:
+  static std::mutex 					      mSynchLock;
+  static std::vector<ncorr_stats*>	mDbgStats;
+
+public:
+  static bool addDebugStats(ncorr_stats* stats)
+  {
+    bool l_bRet = true;
+#ifdef NCORR_STATS_DEBUG
+    std::lock_guard<std::mutex> lock(mSynchLock);
+
+    mDbgStats.push_back(stats);
+#else
+    l_bRet = false;
+#endif /*NCORR_STATS_DEBUG*/
+    return l_bRet;
+  }
+
+  static uint32_t		 getDbgStatCount(void)
+  {
+    return mDbgStats.size();
+  }
+
+  static ncorr_stats* getDebugStatAt(uint32_t index)
+  {
+    return (index < mDbgStats.size()) ?
+        mDbgStats.at(index) : nullptr;
+  }
+
+  static void clearStats(void)
+  {
+    mDbgStats.clear();
+    return;
+  }
+};
+#endif /*NCORR_STATS_DEBUG*/
+
     // Nonlinear optimization ------------------------------------------------//
     class nloptimizer_base {         
         public:      
@@ -236,7 +314,7 @@ struct DIC_analysis_output final {
     double units_per_pixel;
 };
 
-DIC_analysis_output DIC_analysis(const DIC_analysis_input&);
+DIC_analysis_output DIC_analysis(const DIC_analysis_input&, double* pSelectedCoef = nullptr);
 
 // Conversion between Lagrangian and Eulerian displacements ------------------//
 DIC_analysis_output change_perspective(const DIC_analysis_output&, INTERP);

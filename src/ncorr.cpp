@@ -7,9 +7,16 @@
 
 #include "ncorr.h"
 
+
 namespace ncorr {
     
 namespace details {    
+
+#ifdef NCORR_STATS_DEBUG
+    std::mutex 			          ncorr_stats_debugger::mSynchLock;
+    std::vector<ncorr_stats*>	ncorr_stats_debugger::mDbgStats;
+#endif /*NCORR_STATS_DEBUG*/
+
     // nonlinear optimizer ---------------------------------------------------//
     std::pair<const Array2D<double>&, bool> nloptimizer_base::global(const Array2D<double>& params_init) const {
         chk_input_params_size(params_init);
@@ -559,7 +566,14 @@ namespace details {
                 params(5) = (dv_dp2*(delta_p(2)+1) - delta_p(3)*(dv_dp1+1))/denominator; 
                 params(6) = (du_dp1*(delta_p(5)+1) - delta_p(4)*(du_dp2+1))/denominator; 
                 params(7) = ((delta_p(2)+1)*(du_dp2+1) - delta_p(3)*du_dp1)/denominator - 1;
-                
+
+
+#ifdef NCORR_ENABLE_DEBUG
+                ncorr_stats* l_dbgStat = new ncorr_stats(params(0),params(1),params(2),params(3),
+                		params(4),params(5),params(6),params(7),params(8));
+                ncorr_stats_debugger::addDebugStats(l_dbgStat);
+#endif /*NCORR_ENABLE_DEBUG*/
+
                 return true;
             }
         }
@@ -1986,7 +2000,8 @@ void save(const DIC_analysis_output &DIC_output, const std::string &filename) {
     os.close();
 }
 
-DIC_analysis_output DIC_analysis(const DIC_analysis_input &DIC_input) {
+DIC_analysis_output DIC_analysis(const DIC_analysis_input &DIC_input, double* pSelectedCoef)
+{
     typedef ROI2D::difference_type                              difference_type;
             
     if (DIC_input.imgs.size() < 2) {
@@ -2052,7 +2067,14 @@ DIC_analysis_output DIC_analysis(const DIC_analysis_input &DIC_input) {
         if (!cc_values.empty()) {
             double selected_corrcoef = prctile(cc_values, DIC_input.prctile_corrcoef);
             std::cout << "Selected correlation coefficient value: " << selected_corrcoef << ". Correlation coefficient update value: " << DIC_input.update_corrcoef << "." << std::endl;
-            if (selected_corrcoef > DIC_input.update_corrcoef) {
+
+            if ( nullptr != pSelectedCoef )
+            {
+            	*pSelectedCoef = selected_corrcoef;
+            }
+
+            if (selected_corrcoef > DIC_input.update_corrcoef)
+            {
                 // Update the reference image index as well as the reference roi
                 ref_idx = cur_idx;
                 roi_ref = update(DIC_input.roi, DIC_output.disps[cur_idx-1], DIC_input.interp_type);

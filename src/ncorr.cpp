@@ -1538,7 +1538,11 @@ namespace details {
         // seed with the highest correlation coefficient is used in the 
         // analysis. The higher the number of seeds, the more robust (but slower)
         // the analysis will be.
+#ifdef NCORR_ENABLE_IMAGES_FROM_ARRAY2D
         difference_type num_redundant_seeds = 16; 
+#else
+        difference_type num_redundant_seeds = 4;
+#endif
         auto redundant_seeds = get_ROI_partition_diagram_seeds(get_ROI_partition_diagram(roi_reduced, num_redundant_seeds), roi_reduced, num_redundant_seeds);
         for (auto &region_seeds: redundant_seeds) {            
             // Must scale seed position

@@ -136,7 +136,7 @@ class Array2D final {
         explicit Array2D(const Array2D<T2,T_alloc2> &A) : h(A.h), w(A.w), s(A.s), ptr(allocate_and_copy(A.s, A.ptr)) { }
         // Allow implicit conversions from regions - overloads for region and 
         // const_region are both needed because implicit conversions do not chain. 
-        Array2D(const const_region &reg) : h(reg.region_height()), w(reg.region_width()), s(reg.region_size()), ptr(allocate_and_copy(reg.region_size(), reg.begin())) { } 
+        Array2D(const const_region &reg) : h(reg.region_height()), w(reg.region_width()), s(reg.region_size()), ptr(allocate_and_copy(reg.region_size(), reg.begin())) { }
         Array2D(const region &reg) : h(reg.region_height()), w(reg.region_width()), s(reg.region_size()), ptr(allocate_and_copy(reg.region_size(), reg.begin())) { }
         
         // Static factory methods --------------------------------------------//
@@ -560,7 +560,7 @@ class Array2D final {
         difference_type h;
         difference_type w;
         difference_type s;
-        pointer ptr;
+        pointer ptr = nullptr;
         allocator_type alloc;
 };
        

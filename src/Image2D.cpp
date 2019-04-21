@@ -35,30 +35,37 @@ std::ostream& operator<<(std::ostream &os, const Image2D &img) {
 }
 
 void imshow(const Image2D &img, Image2D::difference_type delay) {
+#ifdef NCORR_ENABLE_IMAGES_FROM_ARRAY2D
     if (img.image_data.get_pointer()) {
         imshow(img.image_data,delay);
     } else {
         imshow(img.get_gs(),delay);
     }
+#else
+    imshow(img.get_gs(),delay);
+#endif
+
 }  
 
 bool isequal(const Image2D &img1, const Image2D &img2) {
-    if (img1.image_data.get_pointer() && img2.image_data.get_pointer()) {
-        Array2D<bool> equality = (img1.image_data == img2.image_data);
-	bool all_eq=true;
-	for (auto & el_eq: equality) {
-	  if (!el_eq) {
-	    all_eq=false;
-	  }
-	}
-	
-        return all_eq;
-    } else if (img1.image_data.get_pointer() && !img2.image_data.get_pointer()) {
-        return false;
-    } else if (!img1.image_data.get_pointer() && img2.image_data.get_pointer()) {
-        return false;
+#ifdef NCORR_ENABLE_IMAGES_FROM_ARRAY2D
+  if (img1.image_data.get_pointer() && img2.image_data.get_pointer()) {
+    Array2D<bool> equality = (img1.image_data == img2.image_data);
+    bool all_eq=true;
+    for (auto & el_eq: equality) {
+      if (!el_eq) {
+        all_eq=false;
+      }
     }
-    return *img1.filename_ptr == *img2.filename_ptr;
+
+    return all_eq;
+  } else if (img1.image_data.get_pointer() && !img2.image_data.get_pointer()) {
+    return false;
+  } else if (!img1.image_data.get_pointer() && img2.image_data.get_pointer()) {
+    return false;
+  }
+#endif
+  return *img1.filename_ptr == *img2.filename_ptr;
 }
 
 void save(const Image2D &img, std::ofstream &os) {    
@@ -73,9 +80,11 @@ void save(const Image2D &img, std::ofstream &os) {
 // Access --------------------------------------------------------------------//
 Array2D<double> Image2D::get_gs() const {
     // get_gs() uses opencv's imread() function; must convert Mat to Array2D type.
+#ifdef NCORR_ENABLE_IMAGES_FROM_ARRAY2D
     if (image_data.get_pointer()) {
         return image_data;
     }    
+#endif
   
     cv::Mat cv_img = cv::imread((*filename_ptr), cv::IMREAD_GRAYSCALE);
     if (!cv_img.data) {
